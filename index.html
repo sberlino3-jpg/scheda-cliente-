@@ -10,17 +10,25 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
 <head>
-<!-- PWA manifest (Android/Chrome) -->
-<link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#f7a40a">
-
-<!-- Icona iOS (Safari/iPhone) -->
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-
-<!-- Migliora aspetto su iOS quando salvata a Home -->
+<!-- PWA + icons (Scheda Cliente) -->
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#f9a31a">
+<!-- iOS -->
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="SchedaCliente">
-
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Scheda Cliente">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<!-- Favicon fallback -->
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+<script>
+  // Register service worker (safe: only if supported)
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js');
+    });
+  }
+</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Scheda Cliente</title>
