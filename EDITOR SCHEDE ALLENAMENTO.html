@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schede Allenamento — Dott. Samuele Berlino</title>
+<style>
+:root{
+  --bg:#0b1724; --panel:#0f2233; --panel2:#0e1b29; --text:#e6edf3; --muted:#9fb1c3; --border:#193247;
+  --accent:#ffb01f; --accent-2:#ff8f1f; --danger:#ef4444; --ok:#22c55e;
+  --fs:clamp(13px,1.02vw,16px); --ctl:42px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:var(--fs) Inter,system-ui,Segoe UI,Arial}
+h1,h2,h3{margin:0 0 10px}
+small, .muted{color:var(--muted)}
+button,input,select,textarea{background:#0b1420;color:var(--text);border:1px solid var(--border);
+  border-radius:12px;min-height:var(--ctl);padding:10px 12px;font:inherit}
+button{cursor:pointer}
+.btn{background:#10263a} .btn:hover{filter:brightness(1.05)}
+.btn.primary{background:var(--accent);color:#1b1403;border:none;font-weight:800}
+.btn.danger{background:var(--danger);border:none}
+.btn.ghost{background:transparent}
+.btn.square{width:42px;display:grid;place-items:center;padding:0}
+.container{max-width:1200px;margin:auto;padding:14px}
+.nav{display:flex;gap:8px;margin:8px auto 16px;justify-content:center}
+.nav button{background:#0e2133}
+.nav .active{outline:2px solid #2b4763}
+.grid{display:grid;gap:16px}
+@media(min-width:1100px){
+  .grid-archive{grid-template-columns:1fr}
+}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,0));
+  border:1px solid var(--border);border-radius:16px;padding:14px}
+.header-actions{display:flex;gap:8px;justify-content:flex-end;margin-bottom:8px;flex-wrap:wrap}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap}
+.list{display:flex;flex-direction:column;gap:10px;max-height:52vh;overflow:auto}
+.item{display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:center;
+  border:1px solid var(--border);padding:10px;border-radius:14px;background:var(--panel2)}
+.item.clickable{cursor:pointer}
+.item.selected{outline:2px solid var(--accent)}
+.thumb{width:56px;height:56px;border-radius:12px;overflow:hidden;display:grid;place-items:center;background:#0b1520;border:1px solid var(--border)}
+.pill{padding:2px 8px;border-radius:999px;border:1px solid var(--border);font-size:.9em}
+/* Editor */
+.day{border:1px dashed var(--border);border-radius:16px;padding:14px;margin:10px 0}
+.exercise{display:grid;gap:10px;align-items:center;
+  grid-template-columns:70px 1fr 1fr 1fr 1fr 56px}
+.exercise .title{line-height:1.1}
+@media(max-width:900px){
+  .exercise{grid-template-columns:60px 1fr;grid-auto-rows:min-content}
+  .exercise .controls{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .exercise .trash{justify-self:end}
+}
+.label{font-size:.9em;color:var(--muted);margin-bottom:4px}
+.block{display:flex;flex-direction:column}
+.kg-edit{outline:2px solid rgba(255,176,31,.45);box-shadow:0 0 0 2px rgba(255,176,31,.15)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.chip{padding:4px 10px;border:1px solid var(--border);border-radius:999px;background:#0f2133}
+.chip button{margin-left:6px;background:transparent;border:none;color:#8aa1b3;cursor:pointer}
+.add-scheme{padding:6px 12px;border-radius:999px;border:1px dashed var(--border);background:transparent;color:var(--muted)}
+/* Modal */
+.modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);z-index:50}
+.sheet{width:min(950px,95vw);max-height:90vh;overflow:auto;background:#0f1f31;border:1px solid var(--border);border-radius:14px;padding:14px}
+/* Scrollbar */
+.list::-webkit-scrollbar, .sheet::-webkit-scrollbar{width:10px;height:10px}
+.list::-webkit-scrollbar-thumb, .sheet::-webkit-scrollbar-thumb{background:#1a3247;border-radius:999px}
+/* Table print */
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{border:1px solid #cbd5e1;padding:8px}
+.table th{background:#f1f5f9;color:#0b1724}
+/* header brand */
+.brand{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.brand h1{font-size:22px;font-weight:900}
+
+/* === v21 variant: colored top border for each 'Giorno' === */
+.day{
+  border-top:4px solid var(--accent, #f59e0b);
+  border-radius:14px;
+  padding-top:14px;
+  margin-top:20px;
+}
+.day .day-name{
+  display:block;
+  text-align:center;
+  font-weight:800;
+  letter-spacing:.2px;
+  margin:8px 0 6px;
+  font-size:clamp(20px, 2.2vw, 28px);
+}
+
+/* --- Aggiunte minime richieste --- */
+.exercise-divider{height:1px;margin:14px 0 10px;background:linear-gradient(90deg,transparent, rgba(255,255,255,.16), transparent);border-radius:2px}
+.tech-row{grid-column:1/-1}
+.tech-pill{margin-top:6px;padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.04);
+  border:1px dashed rgba(255,255,255,.14);font-size:15px}
+.tech-pill.hidden{display:none}
+.week-box{display:inline-flex;align-items:center;gap:8px;margin-left:12px;
+  padding:6px 10px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14)}
+.week-box input{width:72px;height:38px;border-radius:10px;border:1px solid rgba(255,255,255,.14);
+  background:transparent;color:inherit;text-align:center;font-size:18px}
+.exercise.dragging{opacity:.55}
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <h1>Schede Allenamento — <span class="muted">Studio di Chinesiologia • Dott. Samuele Berlino</span></h1>
+      <div class="toolbar">
+        <button id="btn-new" class="btn primary" title="Nuova scheda">Nuova scheda</button>
+        <button id="btn-print" class="btn" title="Stampa / PDF">Stampa / PDF</button>
+      </div>
+    </div>
+
+    <div class="nav">
+      <button data-tab="archive" class="btn active">Archivio</button>
+      <button data-tab="editor" class="btn">Editor</button>
+    </div>
+
+    <section id="archive" class="grid grid-archive">
+      <div class="card">
+        <h2>🗃️ Archivio schede</h2>
+        <div class="toolbar" style="margin:8px 0">
+          <input id="search" placeholder="Cerca per nome cliente…">
+          <button id="btn-dup" class="btn">Duplica</button>
+          <button id="btn-del" class="btn danger">Elimina</button>
+          <div style="flex:1"></div>
+          <button id="btn-exp-backup" class="btn">Esporta backup</button>
+          <button id="btn-imp-backup" class="btn">Importa backup</button>
+        </div>
+        <div id="plan-list" class="list"></div>
+      </div>
+
+      <div class="card">
+        <h2>📚 Libreria esercizi</h2>
+        <div class="toolbar" style="margin:8px 0">
+          <input id="ex-q" placeholder="Cerca: nome / muscolo / attrezzo…">
+          <div style="flex:1"></div>
+          <input id="ex-img" type="file" accept="image/*" style="display:none">
+          <button id="ex-add" class="btn primary">Aggiungi NUOVO esercizio</button>
+        </div>
+        <div id="ex-list" class="list"></div>
+      </div>
+    </section>
+
+    <section id="editor" class="card" style="display:none">
+      <h2>📝 Editor scheda</h2>
+      <div class="toolbar" style="margin:8px 0">
+        <input id="plan-title" placeholder="Nome cliente">
+        <select id="plan-gender">
+          <option value="M">Maschio ♂</option>
+          <option value="F">Femmina ♀</option>
+          <option value="N">Altro</option>
+        </select>
+        <button id="add-day" class="btn">Aggiungi Giorno</button>
+        <div style="flex:1"></div>
+        <button id="btn-export-plan" class="btn">Esporta scheda</button>
+        <button id="btn-import-into" class="btn">Importa nella scheda</button>
+      </div>
+      <div id="days"></div>
+    </section>
+  </div>
+
+  <!-- Picker Modal -->
+  <div id="picker" class="modal">
+    <div class="sheet">
+      <div class="toolbar">
+        <h3 style="margin-right:auto">Seleziona esercizio</h3>
+        <button id="pick-close" class="btn">Chiudi</button>
+      </div>
+      <input id="pick-q" placeholder="Cerca…">
+      <div id="pick-list" class="list" style="margin-top:8px;max-height:60vh"></div>
+    </div>
+  </div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const uid = () => Math.random().toString(36).slice(2);
+const LS = {
+  get:(k,f)=>{ try{ return JSON.parse(localStorage.getItem(k)) ?? f }catch{return f}},
+  set:(k,v)=>localStorage.setItem(k,JSON.stringify(v))
+};
+const IMG_DBELL='data:image/svg+xml;utf8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="2" y="2" width="60" height="60" rx="12" fill="#0b1420" stroke="#1b3350"/><path d="M16 32h32" stroke="#e6edf3" stroke-width="8" stroke-linecap="round"/><rect x="10" y="22" width="8" height="20" rx="3" fill="#94a3b8"/><rect x="46" y="22" width="8" height="20" rx="3" fill="#94a3b8"/></svg>`);
+
+let state={
+  plans: LS.get('pt_plans',[]),
+  exercises: LS.get('pt_exercises',[]),
+  current: null,
+  selectedDay: null
+};
+
+function seedIfEmpty(){
+  if(state.exercises.length===0){
+    state.exercises=[
+      {id:uid(), name:'Panca piana bilanciere', equipment:'Bilanciere', muscle:'Petto', img:null},
+      {id:uid(), name:'Panca piana manubri', equipment:'Manubri', muscle:'Petto', img:null},
+      {id:uid(), name:'Lat machine', equipment:'Pulley', muscle:'Schiena', img:null},
+      {id:uid(), name:'Curl bilanciere', equipment:'Bilanciere', muscle:'Bicipiti', img:null},
+    ];
+    LS.set('pt_exercises',state.exercises);
+  }
+  if(state.plans.length===0){
+    const p={id:uid(),title:'Lollo',gender:'M',days:[{id:uid(),name:'Giorno 1',week:1,items:[
+      {id:uid(),exerciseId:state.exercises[0].id,exerciseName:'Panca piana bilanciere',equipment:'Bilanciere',muscle:'Petto',sets:'',reps:'',kg:'50',restMin:3,restSec:0,notes:'',schemes:[{s:1,r:8},{s:1,r:4},{s:1,r:6}],technique:'',pairExerciseName:''}
+    ]}]};
+    state.plans.push(p); LS.set('pt_plans',state.plans);
+  }
+}
+seedIfEmpty();
+
+function savePlans(){ LS.set('pt_plans',state.plans); }
+function saveExercises(){ LS.set('pt_exercises',state.exercises); }
+
+/* Tabs */
+function setTab(t){
+  $$('#archive, #editor').forEach(sec=>sec.style.display='none');
+  (t==='archive' ? $('#archive'):$('#editor')).style.display='block';
+  $$('.nav .btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===t));
+  if(t==='archive'){ renderArchive(); renderLibrary(); } else { loadCurrent(); renderEditor(); }
+}
+$$('.nav .btn').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));
+
+/* Archive render */
+function renderArchive(){
+  const list=$('#plan-list'); list.innerHTML='';
+  const q=($('#search').value||'').toLowerCase();
+  state.plans.filter(p=>!q || (p.title||'').toLowerCase().includes(q)).forEach(p=>{
+    const el=document.createElement('div'); el.className='item clickable';
+    el.innerHTML=`<div class="thumb"><img src="${IMG_DBELL}"></div>
+      <div><b>${p.title||'Senza titolo'}</b><div class="muted">${p.days.length} giorni</div></div>
+      <div class="toolbar">
+        <button class="btn" data-exp>Esporta</button>
+        <button class="btn" data-imp>Importa</button>
+        <button class="btn" data-open>Apri</button>
+      </div>`;
+    el.addEventListener('click',()=>{ selectPlan(p.id); });
+    el.addEventListener('dblclick',()=>{ openPlan(p.id); });
+    el.querySelector('[data-open]').addEventListener('click',e=>{ e.stopPropagation(); openPlan(p.id); });
+    el.querySelector('[data-exp]').addEventListener('click',e=>{ e.stopPropagation(); exportSinglePlan(p); });
+    el.querySelector('[data-imp]').addEventListener('click',e=>{ e.stopPropagation(); importIntoPlan(p); });
+    if(state.current && p.id===state.current.id){ el.classList.add('selected'); }
+    list.appendChild(el);
+  });
+}
+function selectPlan(id){
+  state.current = state.plans.find(p=>p.id===id) || null; savePlans(); renderArchive();
+}
+function openPlan(id){ selectPlan(id); setTab('editor'); }
+$('#search').addEventListener('input', renderArchive);
+
+/* Library render */
+function renderLibrary(){
+  const list=$('#ex-list'); list.innerHTML='';
+  const q=($('#ex-q').value||'').toLowerCase();
+  state.exercises.filter(e=>([e.name,e.equipment,e.muscle].join(' ')||'').toLowerCase().includes(q)).forEach(e=>{
+    const it=document.createElement('div'); it.className='item';
+    it.innerHTML=`<div class="thumb"><img src="${e.img||IMG_DBELL}"></div>
+      <div><b>${e.name}</b><div class="muted">${(e.muscle||'').toUpperCase()} • ${(e.equipment||'').toUpperCase()}</div></div>
+      <div class="toolbar"><button class="btn" data-add>+</button><button class="btn danger" data-del>🗑️</button></div>`;
+    it.querySelector('[data-add]').addEventListener('click',()=>{ addFromLibrary(e); });
+    it.querySelector('[data-del]').addEventListener('click',()=>{ if(confirm('Eliminare esercizio?')){ state.exercises=state.exercises.filter(x=>x.id!==e.id); saveExercises(); renderLibrary(); }});
+    list.appendChild(it);
+  });
+}
+$('#ex-q').addEventListener('input', renderLibrary);
+$('#ex-add').addEventListener('click',()=>{
+  const name=prompt('Nome esercizio:'); if(!name) return;
+  const equipment=prompt('Attrezzo:',''); const muscle=prompt('Muscolo:','');
+  const f=$('#ex-img').files[0];
+  function push(img){ state.exercises.push({id:uid(),name,equipment,muscle,img}); saveExercises(); renderLibrary(); alert('Esercizio aggiunto.'); }
+  if(f){ const r=new FileReader(); r.onload=()=>push(r.result); r.readAsDataURL(f);} else push(null);
+});
+
+/* Editor */
+function loadCurrent(){
+  if(!state.current) state.current=state.plans[0];
+}
+function renderEditor(){
+  if(!state.current){ $('#days').innerHTML='<div class="muted">Seleziona una scheda dall’archivio.</div>'; return; }
+  $('#plan-title').value=state.current.title||'';
+  $('#plan-gender').value=state.current.gender||'N';
+  const wrap=$('#days'); wrap.innerHTML='';
+  state.current.days.forEach((day,di)=>{
+    if(typeof day.week!=='number') day.week=1;
+    const d=document.createElement('div'); d.className='day';
+    d.innerHTML=`<div class="toolbar" style="justify-content:space-between;align-items:center">
+      <h3 class="day-name">${day.name}
+        <span class="week-box">Settimana <input type="number" class="week-input" min="1" max="52" step="1" value="${day.week||1}"></span>
+      </h3>
+      <div class="toolbar">
+        <button class="btn" data-add>+ Aggiungi esercizio</button>
+        <button class="btn" data-dup>Duplica</button>
+        <button class="btn danger" data-del>Elimina</button>
+      </div>
+    </div>`;
+    const addBtn=d.querySelector('[data-add]'); const delBtn=d.querySelector('[data-del]'); const dupBtn=d.querySelector('[data-dup]');
+    const weekInp=d.querySelector('.week-input');
+    weekInp.addEventListener('input',()=>{ day.week=parseInt(weekInp.value||'1',10)||1; savePlans(); });
+
+    addBtn.addEventListener('click',()=>{ state.selectedDay=day.id; openPicker(); });
+    delBtn.addEventListener('click',()=>{ if(confirm('Eliminare il giorno?')){ state.current.days = state.current.days.filter(x=>x.id!==day.id); savePlans(); renderEditor(); }});
+    dupBtn.addEventListener('click',()=>{ const copy={...day,id:uid(),name:day.name+' (copia)',week:day.week,items:day.items.map(i=>({...i,id:uid()}))}; state.current.days.push(copy); savePlans(); renderEditor(); });
+
+    // righe esercizi + divider
+    day.items.forEach((it,idx)=>{
+      if(idx>0){ const div=document.createElement('div'); div.className='exercise-divider'; d.appendChild(div); }
+      d.appendChild(exerciseRow(day,it));
+    });
+
+    // bottone Aggiungi in fondo al giorno
+    const bottomAdd=document.createElement('div');
+    bottomAdd.className='toolbar'; bottomAdd.style.justifyContent='flex-end';
+    bottomAdd.innerHTML=`<button class="btn" data-add-bottom>+ Aggiungi esercizio</button>`;
+    bottomAdd.querySelector('[data-add-bottom]').addEventListener('click',()=>{ state.selectedDay=day.id; openPicker(); });
+    d.appendChild(bottomAdd);
+
+    wrap.appendChild(d);
+  });
+
+  // abilito drag&drop con auto-scroll
+  enableDragAndDrop();
+}
+
+function exerciseRow(day,it){
+  // campi di tecnica/pair assicurati
+  if(typeof it.technique!=='string') it.technique='';
+  if(typeof it.pairExerciseName!=='string') it.pairExerciseName='';
+
+  const r=document.createElement('div'); r.className='exercise'; r.draggable=true; r.dataset.itemId=it.id;
+  r.innerHTML=`<div class="thumb"><img src="${imgFor(it.exerciseId)}"></div>
+  <div class="title"><b class="ex-name">${it.exerciseName}</b><div class="muted">${(it.muscle||'').toUpperCase()} • ${(it.equipment||'').toUpperCase()}</div></div>
+  <div class="controls">
+    <div class="block"><div class="label">Serie</div><input class="ex-serie" value="${it.sets||''}" placeholder="Serie"></div>
+    <div class="block"><div class="label">Ripetizioni</div><input class="ex-rep" value="${it.reps||''}" placeholder="Rep"></div>
+    <div class="block"><div class="label">Kg</div><input class="ex-kg kg-edit" value="${it.kg||''}" placeholder="Kg"></div>
+    <div class="block"><div class="label">Recupero (mm:ss)</div>
+      <div class="toolbar" style="gap:6px;padding:0">
+        <input class="ex-rec-mm" value="${String(it.restMin??0).padStart(2,'0')}" style="width:80px" placeholder="min">
+        <span>:</span>
+        <input class="ex-rec-ss" value="${String(it.restSec??0).padStart(2,'0')}" style="width:80px" placeholder="sec">
+      </div>
+    </div>
+  </div>
+  <button class="btn danger trash">🗑️</button>
+
+  <div class="tech-row">
+    <div class="label">Tecnica</div>
+    <div class="toolbar" style="gap:8px;flex-wrap:wrap">
+      <select class="tech-select">
+        <option value="" ${it.technique===''?'selected':''}>— Nessuna —</option>
+        <option value="Superset" ${it.technique==='Superset'?'selected':''}>Superset</option>
+        <option value="Dropset" ${it.technique==='Dropset'?'selected':''}>Dropset</option>
+        <option value="Circuito" ${it.technique==='Circuito'?'selected':''}>Circuito</option>
+        <option value="Stripping" ${it.technique==='Stripping'?'selected':''}>Stripping</option>
+        <option value="Piramidale" ${it.technique==='Piramidale'?'selected':''}>Piramidale</option>
+      </select>
+      <button class="btn pair-btn" type="button">Abbina dalla libreria…</button>
+      <div class="tech-pill ${it.technique||it.pairExerciseName?'':'hidden'}"></div>
+    </div>
+  </div>
+
+  <div class="block" style="grid-column:1/-1">
+    <div class="label">Schemi</div>
+    <div class="chips"></div>
+  </div>
+  <div class="block" style="grid-column:1/-1">
+    <div class="label">Note</div>
+    <textarea class="ex-notes textarea" rows="3" placeholder="Aggiungi indicazioni per l’esercizio…">${it.notes||''}</textarea>
+  </div>`;
+
+  const sets=r.querySelector('.ex-serie');
+  const reps=r.querySelector('.ex-rep');
+  const kg=r.querySelector('.ex-kg');
+  const min=r.querySelector('.ex-rec-mm');
+  const sec=r.querySelector('.ex-rec-ss');
+  const ta =r.querySelector('.ex-notes');
+  const trash=r.querySelector('.trash');
+  const techSel=r.querySelector('.tech-select');
+  const pairBtn=r.querySelector('.pair-btn');
+  const pill=r.querySelector('.tech-pill');
+  const chips=r.querySelector('.chips');
+
+  function drawPill(){
+    const t=it.technique||''; const lbl=it.pairExerciseName||'';
+    if(t && lbl){ pill.innerHTML=`<strong>${t}</strong> con <em>${lbl}</em>`; pill.classList.remove('hidden'); }
+    else if(lbl){ pill.textContent=`Con ${lbl}`; pill.classList.remove('hidden'); }
+    else if(t){ pill.textContent=t; pill.classList.remove('hidden'); }
+    else{ pill.classList.add('hidden'); pill.textContent=''; }
+  }
+
+  trash.addEventListener('click',()=>{ day.items=day.items.filter(x=>x.id!==it.id); savePlans(); renderEditor(); });
+  sets.addEventListener('input',()=>{ it.sets=sets.value; savePlans(); });
+  reps.addEventListener('input',()=>{ it.reps=reps.value; savePlans(); });
+  kg.addEventListener('input',()=>{ it.kg=kg.value; savePlans(); });
+  min.addEventListener('input',()=>{ it.restMin=+min.value||0; savePlans(); });
+  sec.addEventListener('input',()=>{ let v=+sec.value||0; if(v>59){v=59; sec.value=59;} it.restSec=v; savePlans(); });
+  ta .addEventListener('input',()=>{ it.notes=ta.value; savePlans(); });
+
+  techSel.addEventListener('change',()=>{ it.technique=techSel.value||''; savePlans(); drawPill(); });
+  pairBtn.addEventListener('click',()=> choosePairFromLibrary(it, drawPill));
+
+  if(!Array.isArray(it.schemes)) it.schemes=[];
+  function drawSchemes(){
+    chips.innerHTML='';
+    it.schemes.forEach((sc,i)=>{
+      const c=document.createElement('span'); c.className='chip'; c.textContent=`${sc.s}x${sc.r}`;
+      const b=document.createElement('button'); b.textContent='×'; b.title='Rimuovi'; b.onclick=()=>{ it.schemes.splice(i,1); savePlans(); drawSchemes(); };
+      c.appendChild(b); chips.appendChild(c);
+    });
+    const add=document.createElement('button'); add.className='add-scheme'; add.textContent='+ Aggiungi schema';
+    add.onclick=()=>{ const s=prompt('Serie?', it.schemes[0]?.s||'1'); if(s===null) return; const rps=prompt('Ripetizioni?', it.schemes[0]?.r||'8'); if(rps===null) return;
+      const sv=parseInt(s,10), rv=parseInt(rps,10); if(!isNaN(sv)&&!isNaN(rv)){ it.schemes.push({s:sv,r:rv}); savePlans(); drawSchemes(); } };
+    chips.appendChild(add);
+  }
+  drawSchemes();
+  drawPill();
+
+  // Drag handlers
+  r.addEventListener('dragstart', ev=>{ r.classList.add('dragging'); ev.dataTransfer.setData('text/plain', it.id); ev.dataTransfer.effectAllowed='move'; });
+  r.addEventListener('dragend',   ()=> r.classList.remove('dragging'));
+
+  return r;
+}
+
+function imgFor(exId){ const ex=state.exercises.find(x=>x.id===exId); return (ex&&ex.img)||IMG_DBELL; }
+
+function addFromLibrary(e){
+  if(!state.current){ alert('Seleziona/crea una scheda.'); setTab('editor'); return; }
+  let day = state.current.days.find(d=>d.id===state.selectedDay) || state.current.days[state.current.days.length-1];
+  if(!day){ day={id:uid(),name:'Giorno '+(state.current.days.length+1),week:1,items:[]}; state.current.days.push(day); }
+  day.items.push({id:uid(),exerciseId:e.id,exerciseName:e.name,equipment:e.equipment,muscle:e.muscle,sets:'',reps:'',kg:'',restMin:0,restSec:0,notes:'',schemes:[],technique:'',pairExerciseName:''});
+  savePlans(); renderEditor();
+}
+
+/* Pair dalla libreria (riuso del picker con callback locale) */
+let _pairTarget = null;
+function choosePairFromLibrary(item, onDone){
+  _pairTarget = { item, onDone };
+  openPicker(true); // true = modalità pair
+}
+
+function openPicker(isPair=false){
+  $('#picker').dataset.mode = isPair ? 'pair' : 'add';
+  $('#picker').style.display='flex'; renderPicker();
+}
+function closePicker(){ $('#picker').style.display='none'; _pairTarget=null; }
+$('#pick-close').addEventListener('click',closePicker);
+$('#pick-q').addEventListener('input',renderPicker);
+
+function renderPicker(){
+  const list=$('#pick-list'); list.innerHTML='';
+  const q=($('#pick-q').value||'').toLowerCase();
+  state.exercises.filter(e=>([e.name,e.equipment,e.muscle].join(' ')||'').toLowerCase().includes(q)).forEach(e=>{
+    const row=document.createElement('div'); row.className='item clickable';
+    row.innerHTML=`<div class="thumb"><img src="${e.img||IMG_DBELL}"></div>
+      <div><b class="name">${e.name}</b><div class="muted">${(e.muscle||'').toUpperCase()} • ${(e.equipment||'').toUpperCase()}</div></div>
+      <div class="toolbar"><button class="btn" data-act>Aggiungi</button></div>`;
+    function pick(){
+      const mode = $('#picker').dataset.mode;
+      if(mode==='pair' && _pairTarget){
+        _pairTarget.item.pairExerciseName = e.name;
+        savePlans();
+        _pairTarget.onDone?.();
+      }else{
+        addFromLibrary(e);
+      }
+      closePicker();
+    }
+    row.addEventListener('click',pick);
+    row.querySelector('[data-act]').addEventListener('click',ev=>{ ev.stopPropagation(); pick(); });
+    list.appendChild(row);
+  });
+}
+
+/* Drag & Drop + Auto Scroll */
+function enableDragAndDrop(){
+  // delego a livello di giorno
+  $$('.day').forEach(dayEl=>{
+    dayEl.addEventListener('dragover', ev=>{
+      ev.preventDefault();
+      const dragging = $('.exercise.dragging');
+      const afterEl = getDragAfterElement(dayEl, ev.clientY);
+      if(!dragging) return;
+      if(afterEl==null) dayEl.appendChild(dragging);
+      else dayEl.insertBefore(dragging, afterEl);
+    });
+    dayEl.addEventListener('drop', ()=>{ persistOrder(dayEl); });
+  });
+
+  // auto-scroll
+  let raf=null;
+  document.addEventListener('dragover', e=>{
+    const y=e.clientY,h=window.innerHeight,m=60; let dy=0;
+    if(y<m) dy=-12; else if(y>h-m) dy=12;
+    if(dy!==0){
+      if(!raf){
+        const step=()=>{ window.scrollBy(0,dy); raf=requestAnimationFrame(step); };
+        raf=requestAnimationFrame(step);
+      }
+    }else{ if(raf){ cancelAnimationFrame(raf); raf=null; } }
+  });
+  ['drop','dragend'].forEach(ev=>document.addEventListener(ev,()=>{ /* stop scroll */ }));
+}
+function getDragAfterElement(container, y){
+  const els=[...container.querySelectorAll('.exercise:not(.dragging)')];
+  return els.reduce((closest,child)=>{
+    const box=child.getBoundingClientRect();
+    const offset=y - box.top - box.height/2;
+    if(offset<0 && offset>closest.offset){ return {offset, element:child}; }
+    else return closest;
+  },{offset:Number.NEGATIVE_INFINITY}).element;
+}
+function persistOrder(dayEl){
+  // trova indice del giorno
+  const idx = Array.from($('#days').children).indexOf(dayEl);
+  const day = state.current.days[idx];
+  const ids=[...dayEl.querySelectorAll('.exercise')].map(e=>e.dataset.itemId);
+  day.items = ids.map(id=> day.items.find(it=>it.id===id)).filter(Boolean);
+  savePlans();
+}
+
+/* Actions */
+$('#btn-new').addEventListener('click',()=>{
+  const title=prompt('Titolo scheda','Senza titolo')||'Senza titolo';
+  const gender=(prompt('Genere (M/F/N)','M')||'M').toUpperCase();
+  const p={id:uid(),title,gender:['M','F','N'].includes(gender)?gender:'N',days:[]};
+  state.plans.push(p); savePlans(); state.current=p; setTab('editor');
+});
+$('#btn-print').addEventListener('click',()=>{ printPlan(state.current); });
+
+$('#btn-dup').addEventListener('click',()=>{
+  if(!state.current) return alert('Seleziona una scheda.');
+  const copy=JSON.parse(JSON.stringify(state.current)); copy.id=uid(); copy.title=(copy.title||'')+' (copia)';
+  state.plans.push(copy); savePlans(); renderArchive();
+});
+$('#btn-del').addEventListener('click',()=>{
+  if(!state.current) return; if(!confirm('Eliminare scheda selezionata?')) return;
+  state.plans=state.plans.filter(p=>p.id!==state.current.id); state.current=state.plans[0]||null; savePlans(); renderArchive();
+});
+$('#add-day').addEventListener('click',()=>{
+  if(!state.current){ alert('Crea prima una scheda.'); return; }
+  state.current.days.push({id:uid(),name:'Giorno '+(state.current.days.length+1),week:1,items:[]}); savePlans(); renderEditor();
+});
+$('#plan-title').addEventListener('input',()=>{ if(!state.current) return; state.current.title=$('#plan-title').value; savePlans(); renderArchive(); });
+$('#plan-gender').addEventListener('change',()=>{ if(!state.current) return; state.current.gender=$('#plan-gender').value; savePlans(); });
+
+$('#btn-export-plan').addEventListener('click',()=>{ if(!state.current) return; exportSinglePlan(state.current); });
+$('#btn-import-into').addEventListener('click',()=>{ if(!state.current) return; importIntoPlan(state.current); });
+
+/* Import/Export */
+function downloadBlob(name, dataStr, mime='application/json'){
+  const b = new Blob([dataStr], {type:mime}); const url = URL.createObjectURL(b);
+  const a = document.createElement('a'); a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+function exportSinglePlan(p){
+  const str = JSON.stringify({plan:p, v:'v21-tech-week', ts:Date.now()}, null, 2);
+  const fname = 'pt_'+(p.title||'cliente').toLowerCase().replace(/\s+/g,'_')+'.ptplan';
+  if(navigator.share && navigator.canShare?.()){
+    const file=new File([str], fname, {type:'application/json'});
+    navigator.share({files:[file],title:'PT Plan',text:'Scheda PT'}).catch(()=>downloadBlob(fname,str));
+  }else downloadBlob(fname,str);
+}
+function importIntoPlan(targetPlan){
+  const inp=Object.assign(document.createElement('input'), {type:'file', accept:'.ptplan,.json,application/json'});
+  inp.onchange=async()=>{
+    const f=inp.files[0]; if(!f) return;
+    try{
+      const txt=await f.text(); const data=JSON.parse(txt);
+      const src = data.plan || data;
+      if(!src || !src.days) throw new Error('File non valido');
+      // Manteniamo id ma sostituiamo contenuto
+      targetPlan.title=src.title; targetPlan.gender=src.gender;
+      targetPlan.days=(src.days||[]).map(d=>({ ...d, week: typeof d.week==='number'?d.week:1,
+        items:(d.items||[]).map(it=>({
+          ...it,
+          technique: it.technique||'',
+          pairExerciseName: it.pairExerciseName||''
+        }))
+      }));
+      savePlans(); setTab('editor');
+    }catch(e){ alert('Import fallito: '+e.message); }
+  };
+  inp.click();
+}
+$('#btn-exp-backup').addEventListener('click',()=>{
+  const data={plans:state.plans, exercises:state.exercises, ts:Date.now(), v:'v21-tech-week'};
+  const str=JSON.stringify(data,null,2); const fname='pt_backup_'+new Date().toISOString().slice(0,10)+'.ptbak';
+  if(navigator.share && navigator.canShare?.()){
+    const file=new File([str], fname, {type:'application/json'});
+    navigator.share({files:[file],title:'PT Backup'}).catch(()=>downloadBlob(fname,str));
+  }else downloadBlob(fname,str);
+});
+$('#btn-imp-backup').addEventListener('click',()=>{
+  const inp=Object.assign(document.createElement('input'), {type:'file', accept:'.ptbak,.json,application/json'});
+  inp.onchange=async()=>{
+    const f=inp.files[0]; if(!f) return;
+    try{
+      const txt=await f.text(); const data=JSON.parse(txt);
+      if(!data.plans||!data.exercises) throw new Error('File non valido');
+      // normalizza tecnica/pair/week
+      state.plans=(data.plans||[]).map(p=>({
+        ...p,
+        days:(p.days||[]).map(d=>({
+          ...d,
+          week: typeof d.week==='number'?d.week:1,
+          items:(d.items||[]).map(it=>({ ...it, technique: it.technique||'', pairExerciseName: it.pairExerciseName||'' }))
+        }))
+      }));
+      state.exercises=data.exercises||[];
+      savePlans(); saveExercises(); setTab('archive');
+    }catch(e){ alert('Import fallito: '+e.message); }
+  }; inp.click();
+});
+
+/* Print */
+function printPlan(plan){
+  if(!plan){ alert('Nessuna scheda.'); return; }
+  function esc(s){ return String(s||'').replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+  const rows=d=>d.items.map(it=>{
+    const rest=(it.restMin||it.restSec)?String(it.restMin||0).padStart(2,'0')+':'+String(it.restSec||0).padStart(2,'0'):'-';
+    const schemes=(it.schemes||[]).map(sc=>`${sc.s}x${sc.r}`).join(' • ');
+    const techLine=(it.technique||it.pairExerciseName)?`<div class="mut">Tecnica: ${esc(it.technique||'')}${it.pairExerciseName?(' (con '+esc(it.pairExerciseName)+')'):''}</div>`:'';
+    return `<tr>
+      <td class="ex"><div class="p"><img src="${imgFor(it.exerciseId)}"/><div><b>${esc(it.exerciseName)}</b>${techLine}<div class="mut">${(it.muscle||'').toUpperCase()} • ${(it.equipment||'').toUpperCase()}</div></div></div></td>
+      <td>${esc(it.sets)}</td><td>${esc(it.reps)}</td><td>${esc(it.kg)}</td><td>${rest}</td><td>${esc(it.notes)}<div>${schemes}</div></td>
+    </tr>`;
+  }).join('');
+  const days=plan.days.map(d=>`<h2>${esc(d.name)} — Settimana ${esc(d.week||1)}</h2><table><thead><tr><th>Esercizio</th><th>Serie</th><th>Rep</th><th>Kg</th><th>Rec.</th><th>Note / Schemi</th></tr></thead><tbody>${rows(d)}</tbody></table>`).join('')||'<p>Nessun esercizio.</p>';
+  const css=`body{font-family:Inter,system-ui,Arial;margin:0;padding:24px;color:#0b1724}
+  h1{margin:0 0 12px;font-size:28px} h2{margin:18px 0 8px;font-size:20px}
+  table{width:100%;border-collapse:collapse;margin-bottom:8px} th,td{border:1px solid #cbd5e1;padding:8px;vertical-align:top;font-size:14px}
+  th{background:#f1f5f9;text-align:left} .ex .p{display:flex;gap:10px;align-items:center}
+  .ex img{width:58px;height:58px;border-radius:10px;border:1px solid #cbd5e1;object-fit:cover;background:#f8fafc} .mut{font-size:12px;color:#475569}
+  @media print { @page {size:auto;margin:12mm} }`;
+  const waitImgs=`(function(){const all=[...document.images];Promise.all(all.map(i=>new Promise(r=>{if(i.complete&&i.naturalWidth)r();else{i.onload=r;i.onerror=r}}))).then(()=>setTimeout(()=>print(),150));})();`;
+  const html=`<!doctype html><html><meta charset="utf-8"><title> </title><style>${css}</style><body><h1>${esc(plan.title)}</h1>${days}<script>${waitImgs}<\/script></body></html>`;
+  const w=window.open('','_blank'); if(!w){return alert('Consenti i popup per stampare.');} w.document.open(); w.document.write(html); w.document.close();
+}
+
+/* init */
+setTab('archive');
+</script>
+</body>
+</html>
