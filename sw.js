@@ -1,5 +1,5 @@
 
-const CACHE = 'scheda-client-v1';
+const CACHE = 'scheda-client-v2';
 const ASSETS = [
   './',
   './index.html',

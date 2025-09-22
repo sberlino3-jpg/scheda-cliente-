@@ -4,14 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Scheda Cliente</title>
-
-<!-- PWA meta (lasciati invariati) -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Scheda Cliente">
 <meta name="theme-color" content="#0c1a28">
-
 <style>
 :root{
   --bg:#0f172a;--panel:#111827;--text:#e5e7eb;--muted:#94a3b8;--border:#1f2937;
@@ -43,7 +42,7 @@ button.primary{background:var(--brand);color:#2d1600;border:none;font-weight:800
 .val input.kg{outline:2px solid var(--ok);box-shadow:0 0 0 2px rgba(34,197,94,.25)}
 .tech{display:flex;gap:6px;align-items:center}
 .tech .tag{background:#132033;border:1px solid #1f334f;color:#cde1ff;padding:4px 8px;border-radius:999px;font-size:.9em;white-space:nowrap}
-.sep{height:1px;background:#1c2a3d;margin:12px 0} /* divisoria tra esercizi */
+.sep{height:1px;background:#1c2a3d;margin:12px 0}
 .meta{font-size:.9em;color:var(--muted)}
 .note{margin-top:6px;font-size:.95em;color:#d6d6d6}
 img.thumb{width:56px;height:56px;border-radius:10px;border:1px solid var(--border);object-fit:cover;background:#0b1220;margin-right:8px}
@@ -53,10 +52,6 @@ img.thumb{width:56px;height:56px;border-radius:10px;border:1px solid var(--borde
   .hide-sm{display:none}
 }
 </style>
-
-<link rel="manifest" href="manifest.webmanifest">
-
-<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
 </head>
 <body>
 <div class="wrap">
@@ -82,11 +77,10 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
 const IMG_DBELL='data:image/svg+xml;utf8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="2" y="2" width="60" height="60" rx="12" fill="#0b1220" stroke="#1f2937"/><path d="M16 32h32" stroke="#e2e8f0" stroke-width="8" stroke-linecap="round"/><rect x="10" y="22" width="8" height="20" rx="3" fill="#94a3b8"/><rect x="46" y="22" width="8" height="20" rx="3" fill="#94a3b8"/></svg>`);
 
-let plan=null;               // piano importato
-let localOver=null;          // override locale: { weekByDayId, kgByItemId }
+let plan=null;
+let localOver=null;
 const LS_KEY='client_overrides_v19';
 
-// carica/salva override (kg & settimana) per persistenza locale
 function loadOverrides(){
   try{ localOver=JSON.parse(localStorage.getItem(LS_KEY))||{weekByDayId:{},kgByItemId:{}}; }
   catch{ localOver={weekByDayId:{},kgByItemId:{}}; }
@@ -96,11 +90,9 @@ function saveOverrides(){
 }
 loadOverrides();
 
-// Trova nome esercizio abbinato per la tecnica (robusto a vari schemi)
 function findPairedExerciseName(item){
   let pairName = item.techPairName || item.techniquePairName || item.pairedExerciseName || item.pairExerciseName || item.tech_exercise || '';
   let pairId   = item.techPairId   || item.techniquePairId   || item.pairedExerciseId   || item.pairExerciseId   || item.tech_ref       || '';
-
   if(!pairName && pairId){
     if(plan && Array.isArray(plan.exercises)){
       const e = plan.exercises.find(x=>x.id===pairId);
@@ -159,10 +151,9 @@ function render(){
 
   host.innerHTML = html;
 
-  // wire modifica settimana & kg
   (plan.days||[]).forEach(day=>{
     const dayId = day.id || day.dayId;
-    const wkInp = host.querySelector(`input[data-week="${CSS.escape(dayId)}"]`);
+    const wkInp = host.querySelector(\`input[data-week="\${CSS.escape(dayId)}"]\`);
     if(wkInp){
       wkInp.addEventListener('input', ()=>{
         let v = parseInt(wkInp.value,10);
@@ -172,10 +163,10 @@ function render(){
     }
     (day.items||[]).forEach(it=>{
       const kgId = it.id || it.itemId;
-      const inp = host.querySelector(`input[data-kg="${CSS.escape(kgId)}"]`);
+      const inp = host.querySelector(\`input[data-kg="\${CSS.escape(kgId)}"]\`);
       if(inp){
         const initial = localOver.kgByItemId[kgId];
-        if(initial!=null) inp.value = initial; // ripristina override
+        if(initial!=null) inp.value = initial;
         inp.addEventListener('input', ()=>{
           localOver.kgByItemId[kgId] = inp.value;
           saveOverrides();
@@ -191,42 +182,41 @@ function renderItem(dayId, it, idx){
   const kgId = esc(it.id || it.itemId || ('it_'+Math.random().toString(36).slice(2)));
   const tech = techniqueLabel(it);
   const notes = esc(it.notes || it.note || '');
-  const schemes = Array.isArray(it.schemes)? it.schemes.map(s=>`${s.s}x${s.r}`).join(' • ') : '';
+  const schemes = Array.isArray(it.schemes)? it.schemes.map(s=>\`\${s.s}x\${s.r}\`).join(' • ') : '';
   const rest = hhmm(it.restMin, it.restSec);
 
-  return `
-  <div class="item" data-item="${kgId}">
+  return \`
+  <div class="item" data-item="\${kgId}">
     <div class="val" style="align-items:flex-start">
-      <img class="thumb hide-sm" src="${img}" alt="">
+      <img class="thumb hide-sm" src="\${img}" alt="">
       <div>
         <div class="lab">Esercizio</div>
-        <div class="val" style="gap:6px"><b>${name}</b></div>
-        ${tech? `<div class="tech" style="margin-top:6px"><span class="tag">${esc(tech)}</span></div>`:''}
-        ${schemes? `<div class="meta" style="margin-top:6px">Schemi: ${esc(schemes)}</div>`:''}
-        ${notes? `<div class="note">Note: <span class="print-note">${notes}</span></div>`:''}
+        <div class="val" style="gap:6px"><b>\${name}</b></div>
+        \${tech? \`<div class="tech" style="margin-top:6px"><span class="tag">\${esc(tech)}</span></div>\`:''}
+        \${schemes? \`<div class="meta" style="margin-top:6px">Schemi: \${esc(schemes)}</div>\`:''}
+        \${notes? \`<div class="note">Note: <span class="print-note">\${notes}</span></div>\`:''}
       </div>
     </div>
 
     <div>
       <div class="lab">Serie</div>
-      <div class="val"><span>${esc(it.sets ?? '')}</span></div>
+      <div class="val"><span>\${esc(it.sets ?? '')}</span></div>
     </div>
     <div>
       <div class="lab">Ripetizioni</div>
-      <div class="val"><span>${esc(it.reps ?? '')}</span></div>
+      <div class="val"><span>\${esc(it.reps ?? '')}</span></div>
     </div>
     <div>
       <div class="lab">Kg</div>
-      <div class="val"><input class="kg" data-kg="${kgId}" type="number" min="0" step="0.5" value="${esc(it.kg ?? '')}"></div>
+      <div class="val"><input class="kg" data-kg="\${kgId}" type="number" min="0" step="0.5" value="\${esc(it.kg ?? '')}"></div>
     </div>
     <div>
       <div class="lab">Recupero</div>
-      <div class="val"><span>${rest}</span></div>
+      <div class="val"><span>\${rest}</span></div>
     </div>
-  </div>`;
+  </div>\`;
 }
 
-// Import .ptplan
 function importPlan(){
   const inp = Object.assign(document.createElement('input'), {type:'file', accept:'.ptplan,.json,application/json'});
   inp.onchange = async ()=>{
@@ -234,12 +224,8 @@ function importPlan(){
     try{
       const txt = await f.text();
       const data = JSON.parse(txt);
-
-      // Compatibilità export: {plan:{...}} o oggetto piano diretto
       const p = data.plan || data;
-
       if(!p || !Array.isArray(p.days)) throw new Error('File non valido: mancano i giorni.');
-
       plan = p;
       render();
       alert('Scheda importata.');
@@ -250,13 +236,11 @@ function importPlan(){
   inp.click();
 }
 
-// Stampa/PDF
 function printPDF(){
   if(!plan) return alert('Importa prima una scheda.');
   window.print();
 }
 
-// Reset override locali
 function resetLocal(){
   if(!plan) return alert('Importa prima una scheda.');
   if(!confirm('Vuoi cancellare i Kg modificati e i numeri di Settimana salvati su questo dispositivo?')) return;
@@ -265,21 +249,17 @@ function resetLocal(){
   render();
 }
 
-// Wiring
-$('#btn-import').addEventListener('click', importPlan);
-$('#btn-print').addEventListener('click', printPDF);
-$('#btn-reset').addEventListener('click', resetLocal);
+document.getElementById('btn-import').addEventListener('click', importPlan);
+document.getElementById('btn-print').addEventListener('click', printPDF);
+document.getElementById('btn-reset').addEventListener('click', resetLocal);
 
-})();
-</script>
-
-<script>
+// SW registration
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').catch(()=>{});
   });
 }
+})();
 </script>
-
 </body>
 </html>
